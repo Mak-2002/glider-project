@@ -1,11 +1,11 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
+
 // 3D scene objects
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
 const renderer = new THREE.WebGLRenderer();
-
 let gliderModel;
 
 function initialize() {
@@ -42,6 +42,9 @@ function initialize() {
         function (gliderGltf) {
             gliderModel = gliderGltf.scene;
             scene.add(gliderModel);
+
+            // Call any additional functions or logic that depends on the glider model here
+            // For example, you can call a function to animate the glider or manipulate it in any way.
         },
         undefined,
         function (error) {
@@ -54,6 +57,6 @@ export {
     scene,
     camera,
     renderer,
-    gliderModel,
-    initialize
-}
+    initialize,
+    gliderModel
+};
