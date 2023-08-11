@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Glider Aircraft Project</title>
+    <title>Controllers - Glider Project</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 
@@ -12,23 +12,20 @@
         <div class="controls">
             <script>
                 const variables = [
-                    'g',
-                    'R',
                     'K4',
                     'K5',
-                    'a1',
-                    'm',
+                    'A1',
+                    'mass_of_glider',
                     'wingspan',
                     'wingarea',
                     'fuselageLength',
                     'fuselageHeight',
                     'tailHeight',
                     'tailSpan',
-                    'Vf',
-                    'T',
-                    'Pr',
+                    'wind_speed',
+                    'air_temperature',
+                    'atmpspheric_pressure',
                     'CD',
-                    'w'
                 ];
 
                 const controlsDiv = document.querySelector('.controls');
@@ -58,31 +55,6 @@
             <button onclick="assignValues()">Assign Values</button>
         </div>
     </div>
-
-    <script>
-        function assignValues() {
-            // Assign values to variables here
-            const g = parseFloat(document.getElementById('g').value);
-            const R = parseFloat(document.getElementById('R').value);
-            const K4 = parseFloat(document.getElementById('K4').value);
-            const K5 = parseFloat(document.getElementById('K5').value);
-            const a1 = parseFloat(document.getElementById('a1').value);
-            const m = parseFloat(document.getElementById('m').value);
-            const wingspan = parseFloat(document.getElementById('wingspan').value);
-            const wingarea = parseFloat(document.getElementById('wingarea').value);
-            const fuselageLength = parseFloat(document.getElementById('fuselageLength').value);
-            const fuselageHeight = parseFloat(document.getElementById('fuselageHeight').value);
-            const tailHeight = parseFloat(document.getElementById('tailHeight').value);
-            const tailSpan = parseFloat(document.getElementById('tailSpan').value);
-            const Vf = parseFloat(document.getElementById('Vf').value);
-            const T = parseFloat(document.getElementById('T').value);
-            const Pr = parseFloat(document.getElementById('Pr').value);
-            const CD = parseFloat(document.getElementById('CD').value);
-            const w = parseFloat(document.getElementById('w').value);
-
-            // Do something with the assigned values
-        }
-    </script>
 </body>
 
 </html>

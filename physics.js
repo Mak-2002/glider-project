@@ -46,6 +46,27 @@ let linear_velocity = new THREE.Vector3(0, 0, 0); //? linear velocity
 let starting_euler_angles = new THREE.Vector3(0, 1, 1); //? initial pitch, roll, and yaw angles
 let euler_angles = new THREE.Vector3(0, 1, 1); //? pitch, roll, and yaw angles (Euler angles)
 
+
+function assignValues() {
+    // Assign values to variables here
+    K4 = parseFloat(document.getElementById('K4').value);
+    K5 = parseFloat(document.getElementById('K5').value);
+    A1 = parseFloat(document.getElementById('a1').value);
+    mass_of_glider = parseFloat(document.getElementById('m').value);
+    wingspan = parseFloat(document.getElementById('wingspan').value);
+    wingarea = parseFloat(document.getElementById('wingarea').value);
+    fuselageLength = parseFloat(document.getElementById('fuselageLength').value);
+    fuselageHeight = parseFloat(document.getElementById('fuselageHeight').value);
+    tailHeight = parseFloat(document.getElementById('tailHeight').value);
+    tailSpan = parseFloat(document.getElementById('tailSpan').value);
+    wind_speed = parseFloat(document.getElementById('Vf').value);
+    air_temperature = parseFloat(document.getElementById('T').value);
+    atmospheric_pressure = parseFloat(document.getElementById('Pr').value);
+    CD = parseFloat(document.getElementById('CD').value);
+
+    // Do something with the assigned values
+}
+
 export {
     g,
     R,
