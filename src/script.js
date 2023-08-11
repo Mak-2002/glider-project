@@ -19,7 +19,7 @@ let I = [
 
 
 // Assignable Factors
-let CD; //? drag coefficient
+let CD = 0; //? drag coefficient
 
 let K4 = 0,
   K5 = 0,
@@ -28,16 +28,16 @@ let K4 = 0,
 let mass_of_glider = 0; //? mass of the glider
 
 //? Geometric characteristics of the glider:
-let wingspan;
-let wingarea;
-let fuselageLength;
-let fuselageHeight;
-let tailHeight;
-let tailSpan;
+let wingspan = 0;
+let wingarea = 0;
+let fuselageLength = 0;
+let fuselageHeight = 0;
+let tailHeight = 0;
+let tailSpan = 0;
 
-let wind_speed; //? wind speed relative to the wing of the glider
-let air_temperature; //? air temperature
-let atmospheric_pressure; //? atmospheric pressure
+let wind_speed = 0; //? wind speed relative to the wing of the glider
+let air_temperature = 0; //? air temperature
+let atmospheric_pressure = 0; //? atmospheric pressure
 
 
 // Working variables
@@ -60,31 +60,104 @@ let euler_angles = new THREE.Vector3(0, 1, 1); //? pitch, roll, and yaw angles (
 let scene, camera, renderer;
 
 const gui = new dat.GUI();
+let values_to_watch = {
+  temp:0,
+}
+
 function init_gui() {
+
+  //* Factors to Change
   const factors = {
-    CD: null,
+    CD: 0,
     K4: 0,
     K5: 0,
     A1: 0,
     mass_of_glider: 0,
-    wingspan: null,
-    wingarea: null,
-    fuselageLength: null,
-    fuselageHeight: null,
-    tailHeight: null,
-    tailSpan: null,
-    wind_speed: null,
-    air_temperature: null,
-    atmospheric_pressure: null,
+    wingspan: 0,
+    wingarea: 0,
+    fuselageLength: 0,
+    fuselageHeight: 0,
+    tailHeight: 0,
+    tailSpan: 0,
+    wind_speed: 0,
+    air_temperature: 0,
+    atmospheric_pressure: 0,
   };
-  gui
-    .add(factors, 'mass_of_glider', 20, 2000).onChange(()=>{
-      mass_of_glider = factors.mass_of_glider;
-      console.log(mass_of_glider);
-    })
-    .name("Mass of Glider");
-}
+  gui.add(factors, 'CD', 1, 30).name('Drag Coefficient').onChange(() => {
+    CD = factors.CD;
+    console.log(`CD: ${CD}`);
+  });
 
+  gui.add(factors, 'K4', 1, 10).name('Left Co K4 const').onChange(() => {
+    K4 = factors.K4;
+    console.log(`K4: ${K4}`);
+  });
+
+  gui.add(factors, 'K5', 1, 10).name('Left Co K5 const').onChange(() => {
+    K5 = factors.K5;
+    console.log(`K5: ${K5}`);
+  });
+
+  gui.add(factors, 'A1', 1, 10).name('Left Co A1 const').onChange(() => {
+    A1 = factors.A1;
+    console.log(`A1: ${A1}`);
+  });
+
+  gui.add(factors, 'mass_of_glider', 20, 2000).name('Mass of Glider').onChange(() => {
+    mass_of_glider = factors.mass_of_glider;
+    console.log(`mass_of_glider: ${mass_of_glider}`);
+  });
+
+
+  gui.add(factors, 'wingarea', 1, 20).name('Wing Area').onChange(() => {
+    wingarea = factors.wingarea;
+    console.log(`wingarea: ${wingarea}`);
+  });
+
+  gui.add(factors, 'wind_speed', 1, 10).name('Wind Speed').onChange(() => {
+    wind_speed = factors.wind_speed;
+    console.log(`wind_speed: ${wind_speed}`);
+  });
+
+  gui.add(factors, 'air_temperature', 0, 40).name('Air Temperature').onChange(() => {
+    air_temperature = factors.air_temperature;
+    console.log(`air_temperature: ${air_temperature}`);
+  });
+
+  gui.add(factors, 'atmospheric_pressure', 1, 200).name('Atmos Pressure').onChange(() => {
+    atmospheric_pressure = factors.atmospheric_pressure;
+    console.log(`atmospheric_pressure: ${atmospheric_pressure}`);
+  });
+
+  // gui.add(factors, 'wingspan').name('wingspan').onChange(() => {
+  //   wingspan = factors.wingspan;
+  //   console.log(`wingspan: ${wingspan}`);
+  // });
+
+  // gui.add(factors, 'fuselageLength').name('fuselageLength').onChange(() => {
+  //   fuselageLength = factors.fuselageLength;
+  //   console.log(`fuselageLength: ${fuselageLength}`);
+  // });
+
+  // gui.add(factors, 'fuselageHeight').name('fuselageHeight').onChange(() => {
+  //   fuselageHeight = factors.fuselageHeight;
+  //   console.log(`fuselageHeight: ${fuselageHeight}`);
+  // });
+
+  // gui.add(factors, 'tailHeight').name('tailHeight').onChange(() => {
+  //   tailHeight = factors.tailHeight;
+  //   console.log(`tailHeight: ${tailHeight}`);
+  // });
+
+  // gui.add(factors, 'tailSpan').name('tailSpan').onChange(() => {
+  //   tailSpan = factors.tailSpan;
+  //   console.log(`tailSpan: ${tailSpan}`);
+  // });
+
+  //* Values to Watch
+
+  gui.add(values_to_watch, 'temp').listen();
+}
 function init_camera() {
   camera = new THREE.PerspectiveCamera(
     75,
@@ -184,8 +257,13 @@ function onWindowResize() {
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
+function update_values() {
+  
+}
+
 function animate() {
   renderer.render(scene, camera);
+  update_values();
   requestAnimationFrame(animate);
 }
 
