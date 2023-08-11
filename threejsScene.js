@@ -21,15 +21,72 @@ controls.rotateSpeed = 0.1;
 
 let gliderModel;
 
-function initialize() {
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
 
-    // Add an environment light
-    const light = new THREE.HemisphereLight(0xffffff, 0x000000, 1);
-    scene.add(light);
+/**
+ * Create the ground plane geometry
+*/
+function create_ground_plane() {
+    const planeWidth = 10;
+    const planeHeight = 10;
+    const planeSegments = 50;
 
-    // Creating skybox
+    const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight, planeSegments, planeSegments);
+
+    // Define the height of each vertex
+    const positionAttribute = geometry.attributes.position;
+    const vertexCount = positionAttribute.count;
+    const vertexHeight = new Float32Array(vertexCount);
+
+    const randomRange = 0.5; // Adjust this to control the mountain shape
+
+    for (let i = 0; i < vertexCount; i++) {
+        const x = positionAttribute.getX(i);
+        const y = positionAttribute.getY(i);
+        const noise = Math.random() * randomRange;
+        // Calculate the height using a mountain-like function
+        const height = noise * Math.sin(x * 10) * Math.sin(y * 10);
+        positionAttribute.setZ(i, height);
+        vertexHeight[i] = height;
+    }
+
+    geometry.attributes.position.needsUpdate = true;
+    geometry.setAttribute('height', new THREE.BufferAttribute(vertexHeight, 1));
+
+    // Create a material
+    const textureLoader = new THREE.TextureLoader();
+    const texture = textureLoader.load('/textures/rocky_mountain.jpg',
+        function (loadedTexture) {
+            // Texture loaded successfully
+            material.map = loadedTexture;
+            material.needsUpdate = true;
+        },
+        undefined,
+        function (error) {
+            // Error callback
+            console.error('Texture loading error:', error);
+        }
+    );
+    const material = new THREE.MeshLambertMaterial({ map: texture });
+    console.log(texture);
+
+    // Create a mesh and add it to the scene
+    const ground = new THREE.Mesh(geometry, material);
+
+    // Rotate the mesh to be vertical
+    ground.rotation.x = Math.PI / 2;
+
+    // Position the ground plane higher
+    ground.position.y = 1;
+
+    scene.add(ground);
+}
+
+
+
+/**
+ * Create the sky box
+ */
+function create_sky_box() {
     const skyboxLoader = new THREE.CubeTextureLoader();
     const skyboxTexture = skyboxLoader.load([
         'skybox/right.bmp',
@@ -40,15 +97,12 @@ function initialize() {
         'skybox/back.bmp'
     ]);
     scene.background = skyboxTexture;
+}
 
-    // Creating a ground plane
-    const groundGeometry = new THREE.PlaneGeometry(10, 10);
-    const groundMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-    const ground = new THREE.Mesh(groundGeometry, groundMaterial);
-    ground.rotation.x = -Math.PI / 2; // Rotate the ground to be horizontal
-    scene.add(ground);
-
-    // Loading the glider 3D model
+/**
+ * loads the glider model
+ */
+function load_glider_model() {
     const loader = new GLTFLoader();
     loader.load(
         '/glider.glb',
@@ -64,6 +118,25 @@ function initialize() {
         }
     );
     window.addEventListener("resize", onWindowResize);
+}
+
+/**
+ * Add an environment light
+ */
+function add_light() {
+    const light = new THREE.HemisphereLight(0xffffff, 0x000000, 1);
+    scene.add(light);
+
+}
+
+function initialize() {
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    create_sky_box(),
+        add_light(),
+        create_ground_plane(),
+        load_glider_model();
 }
 
 function onWindowResize() {
