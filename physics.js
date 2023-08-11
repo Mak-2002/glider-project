@@ -35,7 +35,7 @@ let CD; //? drag coefficient
 
 let angular_velocity = new THREE.Vector3(1, 1, 1); //? instantaneous angular velocity
 
-let CL = A1 * (K4 * Math.pow(Vf, 2) + K5); //? lift coefficient
+let CL = A1 * (K4 * Math.pow(wind_speed, 2) + K5); //? lift coefficient
 let air_density = atmospheric_pressure / (R * air_temperature); //? air density
 
 let starting_position = new THREE.Vector3(0, 5, 0); //? starting position 
