@@ -61,7 +61,7 @@ let scene, camera, renderer;
 
 const gui = new dat.GUI();
 let values_to_watch = {
-  temp:0,
+  ValueToWatch:0,
 }
 
 function init_gui() {
@@ -156,7 +156,9 @@ function init_gui() {
 
   //* Values to Watch
 
-  gui.add(values_to_watch, 'temp').listen();
+  const controller = gui.add(values_to_watch, 'ValueToWatch').listen();
+  controller.domElement.style.pointerEvents = 'none';
+  controller.domElement.style.opacity = 0.5;
 }
 function init_camera() {
   camera = new THREE.PerspectiveCamera(
@@ -257,13 +259,13 @@ function onWindowResize() {
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-function update_values() {
-  
+function update_monitored_values() {
+  // update the monitored values in gui
 }
 
 function animate() {
   renderer.render(scene, camera);
-  update_values();
+  update_monitored_values();
   requestAnimationFrame(animate);
 }
 
