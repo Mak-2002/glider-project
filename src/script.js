@@ -47,10 +47,10 @@ var angular_velocity = new THREE.Vector3(1, 1, 1) //? instantaneous angular velo
 var lift_coefficient = 0 //? lift coefficient
 var air_density = 0 //? air density
 
-var starting_position = new THREE.Vector3(0, 5, 20) //? starting position 
+var starting_position = new THREE.Vector3(0, 0, 1) //? starting position 
 var position = new THREE.Vector3()
 
-var starting_speed_glider_frame = 0.001
+var starting_speed_glider_frame = 1
 var speed_glider_frame = 0 //? linear velocity
 
 var linear_velocity = new THREE.Vector3()
@@ -71,7 +71,7 @@ var glider_model
 
 const gui = new dat.GUI()
 var monitored_values = {
-  speed: 0,
+  speed: 0.0001,
   altitude: 0
 }
 
@@ -239,6 +239,7 @@ function add_glider_model() {
     (gltf) => {
       scene.add(gltf.scene)
       glider_model = gltf.scene
+      glider_model.rotateY(Math.PI);
     },
 
 
@@ -364,6 +365,7 @@ function animate() {
 
   // Euler's method in integeration to find velocity and position
   var delta_time = clock.getDelta()
+  delta_time/=4
   linear_velocity.copy(linear_velocity.clone().add(acceleration.multiplyScalar(delta_time)))
 
   //Update Position
