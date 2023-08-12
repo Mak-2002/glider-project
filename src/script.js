@@ -9,13 +9,7 @@ import * as dat from "dat.gui"
 const g = 9.8 //? acceleration due to gravity
 const R = 287.058 //? specific gas constant for dry air
 const SEA_LEVEL_PRESSURE = 101325
-// Pr = SEA_LEVEL_PRESSURE * Math.exp(-altitude / 7000) // simplified, assumes standard atmospheric conditions
-
-var I = [
-  [0, 0, 0],
-  [0, 0, 0],
-  [0, 0, 0]
-] //? moment of inertia tensor
+var I = 0
 
 
 // Assignable Factors
@@ -29,12 +23,13 @@ var mass_of_glider = 100 //? mass of the glider
 
 //? Geometric characteristics of the glider:
 var wingspan = 0
-var wing_area = 0
+var wing_area = 1
 var fuselageLength = 0
 var fuselageHeight = 0
 var tailHeight = 0
 var tailSpan = 0
-var projected_area = 0
+var projected_area = 2
+var glider_lenght = 2
 
 var air_speed = 0 //? wind speed relative to the wing of the glider
 var air_temperature = 15 //? air temperature
@@ -140,30 +135,6 @@ function init_gui() {
     console.log(`atmospheric_pressure: ${atmospheric_pressure}`)
   })
 
-  // gui.add(factors, 'wingspan').name('wingspan').onChange(() => {
-  //   wingspan = factors.wingspan
-  //   console.log(`wingspan: ${wingspan}`)
-  // })
-
-  // gui.add(factors, 'fuselageLength').name('fuselageLength').onChange(() => {
-  //   fuselageLength = factors.fuselageLength
-  //   console.log(`fuselageLength: ${fuselageLength}`)
-  // })
-
-  // gui.add(factors, 'fuselageHeight').name('fuselageHeight').onChange(() => {
-  //   fuselageHeight = factors.fuselageHeight
-  //   console.log(`fuselageHeight: ${fuselageHeight}`)
-  // })
-
-  // gui.add(factors, 'tailHeight').name('tailHeight').onChange(() => {
-  //   tailHeight = factors.tailHeight
-  //   console.log(`tailHeight: ${tailHeight}`)
-  // })
-
-  // gui.add(factors, 'tailSpan').name('tailSpan').onChange(() => {
-  //   tailSpan = factors.tailSpan
-  //   console.log(`tailSpan: ${tailSpan}`)
-  // })
 
   //* Values to Watch
 
@@ -272,6 +243,7 @@ function init() {
   // Assign starting values
   linear_velocity = new THREE.Vector3(starting_speed_glider_frame, 0, 0)
   position.copy(starting_position)
+  I = (1 / 12) * mass_of_glider * Math.pow(glider_lenght, 2);
 
   animate()
 }
@@ -346,15 +318,7 @@ function calc_drag() {
   return drag
 }
 
-
-const clock = new THREE.Clock()
-function animate() {
-  renderer.render(scene, camera)
-
-  atmospheric_pressure = SEA_LEVEL_PRESSURE * Math.exp(-position.z / 7000)
-  speed_glider_frame = world_to_glider_trans(linear_velocity).x
-  air_density = atmospheric_pressure / (R * air_temperature) //? air density
-
+function linear_movement() {
   //* Calculate Forces
   var lift = calc_lift()
   var drag = calc_drag()
@@ -365,13 +329,25 @@ function animate() {
 
   // Euler's method in integeration to find velocity and position
   var delta_time = clock.getDelta()
-  delta_time/=4
+  delta_time /= 4
   linear_velocity.copy(linear_velocity.clone().add(acceleration.multiplyScalar(delta_time)))
 
   //Update Position
   position.copy(position.add(linear_velocity.clone().multiplyScalar(delta_time)))
-  if(glider_model)glider_model.position.copy(position)
+  if (glider_model) glider_model.position.copy(position)
+}
 
+const clock = new THREE.Clock()
+function animate() {
+  renderer.render(scene, camera)
+
+  atmospheric_pressure = SEA_LEVEL_PRESSURE * Math.exp(-position.z / 7000)
+  speed_glider_frame = world_to_glider_trans(linear_velocity).x
+  air_density = atmospheric_pressure / (R * air_temperature) //? air density
+
+  linear_movement();
+
+  
 
   update_monitored_values()
   requestAnimationFrame(animate)
