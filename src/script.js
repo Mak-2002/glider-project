@@ -13,11 +13,8 @@ var I = 0
 
 
 // Assignable Factors
-var drag_coefficient = 0 //? drag coefficient
-
-var K4 = 0,
-  K5 = 0,
-  A1 = 1 //? experimental constants for lift coefficient
+var drag_coefficient = 1 //? drag coefficient
+var lift_coefficient = 2 //? lift coefficient
 
 var mass_of_glider = 100 //? mass of the glider
 
@@ -75,9 +72,7 @@ function init_gui() {
   //* Factors to Change
   const factors = {
     drag_coefficient: 0,
-    K4: 0,
-    K5: 0,
-    A1: 1,
+    lift_coefficient: 2,
     mass_of_glider: 0,
     wingspan: 0,
     wing_area: 0,
@@ -89,24 +84,14 @@ function init_gui() {
     air_temperature: 0,
     atmospheric_pressure: 0,
   }
-  gui.add(factors, 'drag_coefficient', 1, 30).name('Drag Coefficient').onChange(() => {
+  gui.add(factors, 'drag_coefficient', 1, 100).name('Drag Coefficient').onChange(() => {
     drag_coefficient = factors.drag_coefficient
     console.log(`drag_coefficient: ${drag_coefficient}`)
   })
 
-  gui.add(factors, 'K4', -1, 1).name('Left Co K4 const').onChange(() => {
-    K4 = factors.K4
-    console.log(`K4: ${K4}`)
-  })
-
-  gui.add(factors, 'K5', -50, 50).name('Left Co K5 const').onChange(() => {
-    K5 = factors.K5
-    console.log(`K5: ${K5}`)
-  })
-
-  gui.add(factors, 'A1', 0.9, 1.1, 0.05).name('Left Co A1 const').onChange(() => {
-    A1 = factors.A1
-    console.log(`A1: ${A1}`)
+  gui.add(factors, 'lift_coefficient', 1, 100).name('Left Coefficient').onChange(() => {
+    lift_coefficient = factors.lift_coefficient
+    console.log(`lift_coefficient: ${lift_coefficient}`)
   })
 
   gui.add(factors, 'mass_of_glider', 20, 2000).name('Mass of Glider').onChange(() => {
@@ -260,15 +245,14 @@ function update_monitored_values() {
   monitored_values.altitude = position.z;
 }
 
-var glider_world_trans_matrix = new THREE.Matrix4
 
 function glider_to_world_trans(vector) {
   var rotationMatrixPitch = new THREE.Matrix4().makeRotationX(euler_angles.pitch)
   var rotationMatrixYaw = new THREE.Matrix4().makeRotationY(euler_angles.yaw)
   var rotationMatrixRoll = new THREE.Matrix4().makeRotationZ(euler_angles.roll)
-
+  
   var glider_world_trans_matrix = new THREE.Matrix4()
-
+  
   glider_world_trans_matrix.multiply(rotationMatrixRoll)
   glider_world_trans_matrix.multiply(rotationMatrixYaw)
   glider_world_trans_matrix.multiply(rotationMatrixPitch)
@@ -284,21 +268,20 @@ function world_to_glider_trans(vector) {
   var rotationMatrixRoll = new THREE.Matrix4().makeRotationZ(-euler_angles.roll)
 
   var world_glider_trans_matrix = new THREE.Matrix4()
-
+  
   world_glider_trans_matrix.multiply(rotationMatrixRoll)
   world_glider_trans_matrix.multiply(rotationMatrixYaw)
   world_glider_trans_matrix.multiply(rotationMatrixPitch)
 
   var resulted_vector = vector.clone();
-  resulted_vector.applyMatrix4(glider_world_trans_matrix)
+  resulted_vector.applyMatrix4(world_glider_trans_matrix)
   return resulted_vector
 }
 
 
 function calc_lift() {
   // Calculate lift in glider body-fixed frame
-  lift_coefficient = A1 * (K4 * Math.pow(air_speed, 2) + K5) //? lift coefficient
-  var lift = 0.5 * air_density * Math.pow(air_speed, 2) * wing_area
+  var lift = 0.5 * air_density * Math.pow(speed_glider_frame, 2) * wing_area * lift_coefficient
   lift = new THREE.Vector3(0, 0, lift)
 
   // Transform to World frame
@@ -319,17 +302,20 @@ function calc_drag() {
 }
 
 function linear_movement() {
+
+  speed_glider_frame = world_to_glider_trans(linear_velocity).x
+  console.log(world_to_glider_trans(linear_velocity))
+
   //* Calculate Forces
   var lift = calc_lift()
   var drag = calc_drag()
   var weight = new THREE.Vector3(0, 0, -mass_of_glider * g)
-
+  
   var aero_force = new THREE.Vector3().add(lift).add(drag).add(weight)
   var acceleration = aero_force.divideScalar(mass_of_glider)
 
   // Euler's method in integeration to find velocity and position
-  var delta_time = clock.getDelta()
-  delta_time /= 4
+  var delta_time = clock.getDelta() / 4 // make it slower to match with real time
   linear_velocity.copy(linear_velocity.clone().add(acceleration.multiplyScalar(delta_time)))
 
   //Update Position
@@ -342,7 +328,6 @@ function animate() {
   renderer.render(scene, camera)
 
   atmospheric_pressure = SEA_LEVEL_PRESSURE * Math.exp(-position.z / 7000)
-  speed_glider_frame = world_to_glider_trans(linear_velocity).x
   air_density = atmospheric_pressure / (R * air_temperature) //? air density
 
   linear_movement();
