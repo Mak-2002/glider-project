@@ -23,9 +23,9 @@ var drag_coefficient = 0 //? drag coefficient
 
 var K4 = 0,
   K5 = 0,
-  A1 = 0 //? experimental constants for lift coefficient
+  A1 = 1 //? experimental constants for lift coefficient
 
-var mass_of_glider = 0 //? mass of the glider
+var mass_of_glider = 100 //? mass of the glider
 
 //? Geometric characteristics of the glider:
 var wingspan = 0
@@ -37,7 +37,7 @@ var tailSpan = 0
 var projected_area = 0
 
 var air_speed = 0 //? wind speed relative to the wing of the glider
-var air_temperature = 0 //? air temperature
+var air_temperature = 15 //? air temperature
 var atmospheric_pressure = 0 //? atmospheric pressure
 
 
@@ -47,10 +47,10 @@ var angular_velocity = new THREE.Vector3(1, 1, 1) //? instantaneous angular velo
 var lift_coefficient = 0 //? lift coefficient
 var air_density = 0 //? air density
 
-var starting_position = new THREE.Vector3(0, 5, 0) //? starting position 
+var starting_position = new THREE.Vector3(0, 5, 20) //? starting position 
 var position = new THREE.Vector3()
 
-var starting_speed_glider_frame = 50
+var starting_speed_glider_frame = 0.001
 var speed_glider_frame = 0 //? linear velocity
 
 var linear_velocity = new THREE.Vector3()
@@ -72,6 +72,7 @@ var glider_model
 const gui = new dat.GUI()
 var monitored_values = {
   speed: 0,
+  altitude: 0
 }
 
 function init_gui() {
@@ -81,7 +82,7 @@ function init_gui() {
     drag_coefficient: 0,
     K4: 0,
     K5: 0,
-    A1: 0,
+    A1: 1,
     mass_of_glider: 0,
     wingspan: 0,
     wing_area: 0,
@@ -98,17 +99,17 @@ function init_gui() {
     console.log(`drag_coefficient: ${drag_coefficient}`)
   })
 
-  gui.add(factors, 'K4', 1, 10).name('Left Co K4 const').onChange(() => {
+  gui.add(factors, 'K4', -1, 1).name('Left Co K4 const').onChange(() => {
     K4 = factors.K4
     console.log(`K4: ${K4}`)
   })
 
-  gui.add(factors, 'K5', 1, 10).name('Left Co K5 const').onChange(() => {
+  gui.add(factors, 'K5', -50, 50).name('Left Co K5 const').onChange(() => {
     K5 = factors.K5
     console.log(`K5: ${K5}`)
   })
 
-  gui.add(factors, 'A1', 1, 10).name('Left Co A1 const').onChange(() => {
+  gui.add(factors, 'A1', 0.9, 1.1, 0.05).name('Left Co A1 const').onChange(() => {
     A1 = factors.A1
     console.log(`A1: ${A1}`)
   })
@@ -166,9 +167,15 @@ function init_gui() {
 
   //* Values to Watch
 
-  const controller = gui.add(monitored_values, 'speed').name('Speed').listen()
-  controller.domElement.style.pointerEvents = 'none'
-  controller.domElement.style.opacity = 0.5
+  const controller1 = gui.add(monitored_values, 'speed').name('Speed').listen()
+  controller1.domElement.style.pointerEvents = 'none'
+  controller1.domElement.style.opacity = 0.5
+
+  const controller2 = gui.add(monitored_values, 'altitude').name('Altitude').listen()
+  controller2.domElement.style.pointerEvents = 'none'
+  controller2.domElement.style.opacity = 0.5
+  console.log(monitored_values.altitude);
+
 }
 function init_camera() {
   camera = new THREE.PerspectiveCamera(
@@ -277,6 +284,7 @@ function onWindowResize() {
 function update_monitored_values() {
   // update the monitored values in gui
   monitored_values.speed = speed_glider_frame
+  monitored_values.altitude = position.z;
 }
 
 var glider_world_trans_matrix = new THREE.Matrix4
@@ -292,8 +300,8 @@ function glider_to_world_trans(vector) {
   glider_world_trans_matrix.multiply(rotationMatrixYaw)
   glider_world_trans_matrix.multiply(rotationMatrixPitch)
 
-  resulted_vector = new THREE.Vector3().copy(vector)
-  resulted_vector.applyMatrix4(world_glider_trans_matrix)
+  var resulted_vector = vector.clone();
+  resulted_vector.applyMatrix4(glider_world_trans_matrix)
   return resulted_vector
 }
 
@@ -308,7 +316,7 @@ function world_to_glider_trans(vector) {
   world_glider_trans_matrix.multiply(rotationMatrixYaw)
   world_glider_trans_matrix.multiply(rotationMatrixPitch)
 
-  resulted_vector = new THREE.Vector3().copy(vector)
+  var resulted_vector = vector.clone();
   resulted_vector.applyMatrix4(glider_world_trans_matrix)
   return resulted_vector
 }
@@ -337,9 +345,12 @@ function calc_drag() {
   return drag
 }
 
+
+const clock = new THREE.Clock()
 function animate() {
   renderer.render(scene, camera)
 
+  atmospheric_pressure = SEA_LEVEL_PRESSURE * Math.exp(-position.z / 7000)
   speed_glider_frame = world_to_glider_trans(linear_velocity).x
   air_density = atmospheric_pressure / (R * air_temperature) //? air density
 
@@ -347,17 +358,17 @@ function animate() {
   var lift = calc_lift()
   var drag = calc_drag()
   var weight = new THREE.Vector3(0, 0, -mass_of_glider * g)
-  
+
   var aero_force = new THREE.Vector3().add(lift).add(drag).add(weight)
   var acceleration = aero_force.divideScalar(mass_of_glider)
 
   // Euler's method in integeration to find velocity and position
   var delta_time = clock.getDelta()
-  linear_velocity.copy(linear_velocity.add(acceleration.multiplyScalar(delta_time)))
+  linear_velocity.copy(linear_velocity.clone().add(acceleration.multiplyScalar(delta_time)))
 
   //Update Position
-  position.copy(position.add(linear_velocity.multiplyScalar(delta_time)))
-  glider_model.position.copy(position);
+  position.copy(position.add(linear_velocity.clone().multiplyScalar(delta_time)))
+  if(glider_model)glider_model.position.copy(position)
 
 
   update_monitored_values()
