@@ -35,6 +35,7 @@ var atmospheric_pressure = 0 //? atmospheric pressure
 
 // Working variables
 var angular_velocity = new THREE.Vector3(1, 1, 1) //? instantaneous angular velocity
+var angular_speed_keys = 0.01
 
 var lift_coefficient = 1.0 //? lift coefficient
 var air_density = 1.225 //? kg/m^3, air density at sea level
@@ -93,7 +94,7 @@ function init_gui() {
   }
   gui.add(factors, 'drag_coefficient', 1, 2, 0.001).name('Drag Coefficient').onChange(() => {
     drag_coefficient = factors.drag_coefficient
-    if (glider_model) glider_model.translateX(drag_coefficient); //! debug, remove
+    if (glider_model) glider_model.translateX(drag_coefficient) //! debug, remove
     console.log(`drag_coefficient: ${drag_coefficient}`)
   })
 
@@ -138,7 +139,7 @@ function init_gui() {
   const controller2 = gui.add(monitored_values, 'altitude').name('Altitude').listen()
   controller2.domElement.style.pointerEvents = 'none'
   controller2.domElement.style.opacity = 0.5
-  console.log(monitored_values.altitude);
+  console.log(monitored_values.altitude)
 
 }
 
@@ -162,6 +163,38 @@ function add_orbit_controls() {
   controls.dampingFactor = 0.05 // Damping factor for smoother movements
   controls.rotateSpeed = 0.1 // Adjust the rotation speed
 
+}
+
+function add_key_controls() {
+  document.addEventListener('keydown', function (event) {
+    // Access the key that was pressed
+    const key = event.key
+
+    if (key === 'ArrowUp') {
+      console.log('Up Arrow key pressed')
+
+
+    } else if (key === 'ArrowDown') {
+      console.log('Down Arrow key pressed')
+
+
+    } else if (key === 'ArrowLeft') {
+      console.log('Left Arrow key pressed')
+
+    } else if (key === 'ArrowRight') {
+      console.log('Right Arrow key pressed')
+
+
+    } else if (key === 'Q' || key === 'q') {
+      console.log('Q key pressed')
+
+
+    } else if (key === 'W' || key === 'w') {
+      console.log('W key pressed')
+    }
+
+
+  })
 }
 
 function add_sky_box() {
@@ -195,7 +228,7 @@ function add_light() {
 
 }
 
-const axisHelper = new THREE.AxesHelper(4);
+const axisHelper = new THREE.AxesHelper(4)
 function add_glider_model() {
 
   // Load the 3D model
@@ -206,8 +239,8 @@ function add_glider_model() {
     (gltf) => {
       scene.add(gltf.scene)
       glider_model = gltf.scene
-      glider_model.rotateY(Math.PI);
-      glider_model.add(axisHelper);
+      glider_model.rotateY(Math.PI)
+      glider_model.add(axisHelper)
     },
 
 
@@ -221,19 +254,19 @@ function add_glider_model() {
 }
 
 function add_land() {
-  var radius = 30;
-  var widthSegments = 50;
-  var heightSegments = 50;
-  var sphereGeometry = new THREE.SphereGeometry(radius, widthSegments, heightSegments);
-  sphereGeometry.scale(200, 3, 120);
+  var radius = 30
+  var widthSegments = 50
+  var heightSegments = 50
+  var sphereGeometry = new THREE.SphereGeometry(radius, widthSegments, heightSegments)
+  sphereGeometry.scale(200, 3, 120)
   sphereGeometry.translate(-1000, -100, -500)
   //sphereGeometry.rotateX(5)
-  var textureLoader = new THREE.TextureLoader();
-  var landTexture = textureLoader.load('/textures/grass.jpg');
-  var sphereMaterial = new THREE.MeshPhongMaterial({ map: landTexture });
+  var textureLoader = new THREE.TextureLoader()
+  var landTexture = textureLoader.load('/textures/grass.jpg')
+  var sphereMaterial = new THREE.MeshPhongMaterial({ map: landTexture })
 
-  var sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
-  scene.add(sphereMesh);
+  var sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial)
+  scene.add(sphereMesh)
 }
 
 function init() {
@@ -243,21 +276,24 @@ function init() {
   renderer.setSize(window.innerWidth, window.innerHeight)
   document.body.appendChild(renderer.domElement)
 
+  init_gui()
 
   add_orbit_controls()
-  add_sky_box()
-  add_land()
+  add_key_controls()
+
   add_light()
 
+  add_sky_box()
   add_glider_model()
-  init_gui()
+  add_land()
+
 
   window.addEventListener("resize", onWindowResize)
 
   // Assign starting values
   linear_velocity = new THREE.Vector3(0, 0, 5)
   position.copy(starting_position)
-  I = (1 / 12) * mass_of_glider * Math.pow(glider_lenght, 2);
+  I = (1 / 12) * mass_of_glider * Math.pow(glider_lenght, 2)
 
   animate()
 }
@@ -270,8 +306,8 @@ function onWindowResize() {
 
 function update_monitored_values() {
   // update the monitored values in gui
-  monitored_values.speed = linear_velocity.z;
-  monitored_values.altitude = position.y;
+  monitored_values.speed = linear_velocity.z
+  monitored_values.altitude = position.y
 }
 
 
@@ -286,7 +322,7 @@ function glider_to_world_trans(vector) {
   glider_world_trans_matrix.multiply(rotationMatrixYaw)
   glider_world_trans_matrix.multiply(rotationMatrixPitch)
 
-  var resulted_vector = vector.clone();
+  var resulted_vector = vector.clone()
   resulted_vector.applyMatrix4(glider_world_trans_matrix)
   return resulted_vector
 }
@@ -302,7 +338,7 @@ function world_to_glider_trans(vector) {
   world_glider_trans_matrix.multiply(rotationMatrixYaw)
   world_glider_trans_matrix.multiply(rotationMatrixPitch)
 
-  var resulted_vector = vector.clone();
+  var resulted_vector = vector.clone()
   resulted_vector.applyMatrix4(world_glider_trans_matrix)
   return resulted_vector
 }
@@ -311,7 +347,6 @@ function world_to_glider_trans(vector) {
 function calc_lift() {
   // Calculate lift in glider body-fixed frame
   var lift = 0.5 * air_density * Math.pow(speed_glider_frame, 2) * wing_area * lift_coefficient
-  console.log(lift_coefficient);
   lift = new THREE.Vector3(0, lift, 0)
 
   // Transform to World frame
@@ -323,7 +358,6 @@ function calc_lift() {
 function calc_drag() {
   // Calculate drag in glider body-fixed frame
   var drag = 0.5 * air_density * Math.pow(speed_glider_frame, 2) * drag_coefficient * projected_area
-  console.log("something dammed: ", speed_glider_frame);
   drag = new THREE.Vector3(0, 0, -drag)
   // Transform to World frame
   drag.copy(glider_to_world_trans(drag))
@@ -332,17 +366,16 @@ function calc_drag() {
 }
 
 function linear_movement() {
-  speed_glider_frame = world_to_glider_trans(linear_velocity).z;
-  console.log("linear velocity: ", world_to_glider_trans(linear_velocity))
+  speed_glider_frame = world_to_glider_trans(linear_velocity).z
 
   //* Calculate Forces
   var lift = calc_lift()
   var drag = calc_drag()
   var weight = new THREE.Vector3(0, -mass_of_glider * g, 0)
 
-  console.log('lift: ', lift);
-  console.log('drag: ', drag);
-  console.log('weight: ', weight);
+  // console.log('lift: ', lift)
+  // console.log('drag: ', drag)
+  // console.log('weight: ', weight)
 
   var aero_force = new THREE.Vector3().add(lift).add(drag).add(weight)
   var acceleration = aero_force.divideScalar(mass_of_glider)
@@ -357,10 +390,10 @@ function linear_movement() {
     glider_model.position.copy(position)
 
     // Update the camera position to follow the glider
-    camera.position.copy(position.clone().add(new THREE.Vector3(0, 10, 20)));
+    camera.position.copy(position.clone().add(new THREE.Vector3(0, 10, 20)))
 
     // Update the camera lookAt direction to look at the glider
-    camera.lookAt(position);
+    camera.lookAt(position)
   }
 
 }
@@ -372,7 +405,7 @@ function animate() {
   atmospheric_pressure = SEA_LEVEL_PRESSURE * Math.exp(-position.y / 7000)
   air_density = atmospheric_pressure / (R * air_temperature) //? air density
 
-  linear_movement();
+  linear_movement()
 
 
   update_monitored_values()
