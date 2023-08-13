@@ -13,39 +13,38 @@ var I = 0
 
 
 // Assignable Factors
-var drag_coefficient = 1 //? drag coefficient
+var drag_coefficient = 0.05 //? drag coefficient
 var lift_coefficient = 2 //? lift coefficient
 
 var mass_of_glider = 100 //? mass of the glider
 
 //? Geometric characteristics of the glider:
 var wingspan = 0
-var wing_area = 1
+var wing_area = 20.0
 var fuselageLength = 0
 var fuselageHeight = 0
 var tailHeight = 0
 var tailSpan = 0
-var projected_area = 2
-var glider_lenght = 2
+var projected_area = 2.0
+var glider_lenght = 2 //?m^2, projected area of the glider
 
 var air_speed = 0 //? wind speed relative to the wing of the glider
-var air_temperature = 15 //? air temperature
+var air_temperature = 298.15 //? air temperature
 var atmospheric_pressure = 0 //? atmospheric pressure
 
 
 // Working variables
 var angular_velocity = new THREE.Vector3(1, 1, 1) //? instantaneous angular velocity
 
-var lift_coefficient = 0 //? lift coefficient
-var air_density = 0 //? air density
+var lift_coefficient = 1.0 //? lift coefficient
+var air_density = 1.225 //? kg/m^3, air density at sea level
 
 var starting_position = new THREE.Vector3(0, 0, 1) //? starting position 
 var position = new THREE.Vector3()
 
-var starting_speed_glider_frame = 1
-var speed_glider_frame = 0 //? linear velocity
+var speed_glider_frame = 0 //? m/s, initial speed of the glider
 
-var linear_velocity = new THREE.Vector3()
+var linear_velocity = new THREE.Vector3(1, 1, 4)
 
 var starting_euler_angles = new THREE.Vector3(0, 1, 1) //? initial pitch, roll, and yaw angles
 var euler_angles = {
@@ -67,6 +66,14 @@ var monitored_values = {
   altitude: 0
 }
 
+//TODO: fix the code accordingly
+//! Very Important
+//* X is the lateral axis (pitch)
+//* Y is the vertical axis (yaw)
+//* Z is the longitudinal axis (roll)
+//! 
+
+
 function init_gui() {
 
   //* Factors to Change
@@ -84,8 +91,9 @@ function init_gui() {
     air_temperature: 0,
     atmospheric_pressure: 0,
   }
-  gui.add(factors, 'drag_coefficient', 1, 100).name('Drag Coefficient').onChange(() => {
+  gui.add(factors, 'drag_coefficient', 1, 2, 0.001).name('Drag Coefficient').onChange(() => {
     drag_coefficient = factors.drag_coefficient
+    if (glider_model) glider_model.translateX(drag_coefficient); //! debug, remove
     console.log(`drag_coefficient: ${drag_coefficient}`)
   })
 
@@ -133,6 +141,7 @@ function init_gui() {
   console.log(monitored_values.altitude);
 
 }
+
 function init_camera() {
   camera = new THREE.PerspectiveCamera(
     75,
@@ -186,7 +195,9 @@ function add_light() {
 
 }
 
+const axisHelper = new THREE.AxesHelper(4);
 function add_glider_model() {
+
   // Load the 3D model
   const loader = new GLTFLoader()
   loader.load(
@@ -196,6 +207,7 @@ function add_glider_model() {
       scene.add(gltf.scene)
       glider_model = gltf.scene
       glider_model.rotateY(Math.PI);
+      glider_model.add(axisHelper);
     },
 
 
@@ -207,21 +219,21 @@ function add_glider_model() {
     }
   )
 }
-function add_land(){
+
+function add_land() {
   var radius = 30;
-var widthSegments = 50;
-var heightSegments = 50;
-var sphereGeometry = new THREE.SphereGeometry(radius, widthSegments, heightSegments);
-sphereGeometry.scale(200, 3, 120); 
-sphereGeometry.translate(-1000,-100,-5100)
-//sphereGeometry.rotateX(5)
-var textureLoader = new THREE.TextureLoader();
-var landTexture = textureLoader.load('/textures/grass.jpg');
-var sphereMaterial = new THREE.MeshPhongMaterial({ map: landTexture });
+  var widthSegments = 50;
+  var heightSegments = 50;
+  var sphereGeometry = new THREE.SphereGeometry(radius, widthSegments, heightSegments);
+  sphereGeometry.scale(200, 3, 120);
+  sphereGeometry.translate(-1000, -100, -500)
+  //sphereGeometry.rotateX(5)
+  var textureLoader = new THREE.TextureLoader();
+  var landTexture = textureLoader.load('/textures/grass.jpg');
+  var sphereMaterial = new THREE.MeshPhongMaterial({ map: landTexture });
 
-
-var sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
-scene.add(sphereMesh);
+  var sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
+  scene.add(sphereMesh);
 }
 
 function init() {
@@ -243,7 +255,7 @@ function init() {
   window.addEventListener("resize", onWindowResize)
 
   // Assign starting values
-  linear_velocity = new THREE.Vector3(starting_speed_glider_frame, 0, 0)
+  linear_velocity = new THREE.Vector3(0, 0, 5)
   position.copy(starting_position)
   I = (1 / 12) * mass_of_glider * Math.pow(glider_lenght, 2);
 
@@ -258,8 +270,8 @@ function onWindowResize() {
 
 function update_monitored_values() {
   // update the monitored values in gui
-  monitored_values.speed = speed_glider_frame
-  monitored_values.altitude = position.z;
+  monitored_values.speed = linear_velocity.z;
+  monitored_values.altitude = position.y;
 }
 
 
@@ -267,9 +279,9 @@ function glider_to_world_trans(vector) {
   var rotationMatrixPitch = new THREE.Matrix4().makeRotationX(euler_angles.pitch)
   var rotationMatrixYaw = new THREE.Matrix4().makeRotationY(euler_angles.yaw)
   var rotationMatrixRoll = new THREE.Matrix4().makeRotationZ(euler_angles.roll)
-  
+
   var glider_world_trans_matrix = new THREE.Matrix4()
-  
+
   glider_world_trans_matrix.multiply(rotationMatrixRoll)
   glider_world_trans_matrix.multiply(rotationMatrixYaw)
   glider_world_trans_matrix.multiply(rotationMatrixPitch)
@@ -285,7 +297,7 @@ function world_to_glider_trans(vector) {
   var rotationMatrixRoll = new THREE.Matrix4().makeRotationZ(-euler_angles.roll)
 
   var world_glider_trans_matrix = new THREE.Matrix4()
-  
+
   world_glider_trans_matrix.multiply(rotationMatrixRoll)
   world_glider_trans_matrix.multiply(rotationMatrixYaw)
   world_glider_trans_matrix.multiply(rotationMatrixPitch)
@@ -299,7 +311,8 @@ function world_to_glider_trans(vector) {
 function calc_lift() {
   // Calculate lift in glider body-fixed frame
   var lift = 0.5 * air_density * Math.pow(speed_glider_frame, 2) * wing_area * lift_coefficient
-  lift = new THREE.Vector3(0, 0, lift)
+  console.log(lift_coefficient);
+  lift = new THREE.Vector3(0, lift, 0)
 
   // Transform to World frame
   lift.copy(glider_to_world_trans(lift))
@@ -310,8 +323,8 @@ function calc_lift() {
 function calc_drag() {
   // Calculate drag in glider body-fixed frame
   var drag = 0.5 * air_density * Math.pow(speed_glider_frame, 2) * drag_coefficient * projected_area
-  drag = new THREE.Vector3(-drag, 0, 0)
-
+  console.log("something dammed: ", speed_glider_frame);
+  drag = new THREE.Vector3(0, 0, -drag)
   // Transform to World frame
   drag.copy(glider_to_world_trans(drag))
 
@@ -319,15 +332,18 @@ function calc_drag() {
 }
 
 function linear_movement() {
-
-  speed_glider_frame = world_to_glider_trans(linear_velocity).x
-  console.log(world_to_glider_trans(linear_velocity))
+  speed_glider_frame = world_to_glider_trans(linear_velocity).z;
+  console.log("linear velocity: ", world_to_glider_trans(linear_velocity))
 
   //* Calculate Forces
   var lift = calc_lift()
   var drag = calc_drag()
-  var weight = new THREE.Vector3(0, 0, -mass_of_glider * g)
-  
+  var weight = new THREE.Vector3(0, -mass_of_glider * g, 0)
+
+  console.log('lift: ', lift);
+  console.log('drag: ', drag);
+  console.log('weight: ', weight);
+
   var aero_force = new THREE.Vector3().add(lift).add(drag).add(weight)
   var acceleration = aero_force.divideScalar(mass_of_glider)
 
@@ -337,19 +353,27 @@ function linear_movement() {
 
   //Update Position
   position.copy(position.add(linear_velocity.clone().multiplyScalar(delta_time)))
-  if (glider_model) glider_model.position.copy(position)
+  if (glider_model) {
+    glider_model.position.copy(position)
+
+    // Update the camera position to follow the glider
+    camera.position.copy(position.clone().add(new THREE.Vector3(0, 10, 20)));
+
+    // Update the camera lookAt direction to look at the glider
+    camera.lookAt(position);
+  }
+
 }
 
 const clock = new THREE.Clock()
 function animate() {
   renderer.render(scene, camera)
 
-  atmospheric_pressure = SEA_LEVEL_PRESSURE * Math.exp(-position.z / 7000)
+  atmospheric_pressure = SEA_LEVEL_PRESSURE * Math.exp(-position.y / 7000)
   air_density = atmospheric_pressure / (R * air_temperature) //? air density
 
   linear_movement();
 
-  
 
   update_monitored_values()
   requestAnimationFrame(animate)
