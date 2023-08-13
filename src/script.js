@@ -138,7 +138,7 @@ function init_camera() {
     75,
     window.innerWidth / window.innerHeight,
     0.1, // near clipping plane
-    10000 // far clipping plane
+    20000 // far clipping plane
   )
   camera.position.set(0, 0, 10) // Move the camera outside the skybox
 
@@ -172,7 +172,7 @@ function add_sky_box() {
     new THREE.MeshBasicMaterial({ map: texture_lf, side: THREE.DoubleSide }),
   ]
 
-  const skyboxGeo = new THREE.BoxGeometry(10000, 10000, 10000)
+  const skyboxGeo = new THREE.BoxGeometry(20000, 20000, 20000)
   const skybox = new THREE.Mesh(skyboxGeo, materialArray)
 
   scene.add(skybox)
