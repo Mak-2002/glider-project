@@ -172,7 +172,7 @@ function add_sky_box() {
     new THREE.MeshBasicMaterial({ map: texture_lf, side: THREE.DoubleSide }),
   ]
 
-  const skyboxGeo = new THREE.BoxGeometry(8000, 8000, 8000)
+  const skyboxGeo = new THREE.BoxGeometry(10000, 10000, 10000)
   const skybox = new THREE.Mesh(skyboxGeo, materialArray)
 
   scene.add(skybox)
@@ -207,6 +207,22 @@ function add_glider_model() {
     }
   )
 }
+function add_land(){
+  var radius = 30;
+var widthSegments = 50;
+var heightSegments = 50;
+var sphereGeometry = new THREE.SphereGeometry(radius, widthSegments, heightSegments);
+sphereGeometry.scale(200, 3, 120); 
+sphereGeometry.translate(-1000,-100,-5100)
+//sphereGeometry.rotateX(5)
+var textureLoader = new THREE.TextureLoader();
+var landTexture = textureLoader.load('/textures/grass.jpg');
+var sphereMaterial = new THREE.MeshPhongMaterial({ map: landTexture });
+
+
+var sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
+scene.add(sphereMesh);
+}
 
 function init() {
   scene = new THREE.Scene()
@@ -218,6 +234,7 @@ function init() {
 
   add_orbit_controls()
   add_sky_box()
+  add_land()
   add_light()
 
   add_glider_model()
