@@ -169,31 +169,51 @@ function add_key_controls() {
   document.addEventListener('keydown', function (event) {
     // Access the key that was pressed
     const key = event.key
+    if (!glider_model) return
 
-    if (key === 'ArrowUp') {
-      console.log('Up Arrow key pressed')
+    switch (key) {
+      case 'ArrowUp':
+        console.log('Up Arrow key pressed');
+        glider_model.rotateX(-angular_speed_keys);
+        euler_angles.pitch -= angular_speed_keys;
+        break;
 
+      case 'ArrowDown':
+        console.log('Down Arrow key pressed');
+        glider_model.rotateX(+angular_speed_keys);
+        euler_angles.pitch += angular_speed_keys;
+        break;
 
-    } else if (key === 'ArrowDown') {
-      console.log('Down Arrow key pressed')
+      case 'ArrowLeft':
+        console.log('Left Arrow key pressed');
+        glider_model.rotateZ(-angular_speed_keys);
+        euler_angles.roll -= angular_speed_keys;
+        break;
 
+      case 'ArrowRight':
+        console.log('Right Arrow key pressed');
+        glider_model.rotateZ(+angular_speed_keys);
+        euler_angles.roll += angular_speed_keys;
+        break;
 
-    } else if (key === 'ArrowLeft') {
-      console.log('Left Arrow key pressed')
+      case 'Q':
+      case 'q':
+        console.log('Q key pressed');
+        glider_model.rotateY(+angular_speed_keys);
+        euler_angles.yaw += angular_speed_keys;
+        break;
 
-    } else if (key === 'ArrowRight') {
-      console.log('Right Arrow key pressed')
+      case 'W':
+      case 'w':
+        console.log('W key pressed');
+        glider_model.rotateY(-angular_speed_keys);
+        euler_angles.yaw -= angular_speed_keys;
+        break;
 
-
-    } else if (key === 'Q' || key === 'q') {
-      console.log('Q key pressed')
-
-
-    } else if (key === 'W' || key === 'w') {
-      console.log('W key pressed')
+      default:
+        break;
     }
-
-
+    look_at_glider();
   })
 }
 
@@ -388,14 +408,34 @@ function linear_movement() {
   position.copy(position.add(linear_velocity.clone().multiplyScalar(delta_time)))
   if (glider_model) {
     glider_model.position.copy(position)
-
-    // Update the camera position to follow the glider
-    camera.position.copy(position.clone().add(new THREE.Vector3(0, 10, 20)))
-
-    // Update the camera lookAt direction to look at the glider
-    camera.lookAt(position)
+    look_at_glider();
   }
 
+}
+function look_at_glider() {
+  if (!glider_model) return;
+
+  // Define the camera's distance and angle from the glider
+  const distance = 20;
+  const angle = Math.PI / 6; // 30 degrees
+
+  // Calculate the camera position offset based on the distance and angle
+  const offsetX = distance * Math.sin(angle);
+  const offsetY = distance * Math.cos(angle);
+
+  // Update the camera position to follow the glider with the offset
+  const gliderPosition = glider_model.position.clone();
+  const forwardDirection = glider_model.getWorldDirection(new THREE.Vector3());
+  const cameraOffset = new THREE.Vector3(offsetX, offsetY, 0).applyQuaternion(glider_model.quaternion);
+  camera.position.copy(gliderPosition).add(cameraOffset).add(forwardDirection.multiplyScalar(-5));
+
+  console.log(camera.position);
+
+  // Update the camera lookAt direction to look at the glider
+  camera.lookAt(gliderPosition);
+
+  // Rotate the camera's orientation to match the glider's rotation
+  camera.rotation.copy(glider_model.rotation);
 }
 
 const clock = new THREE.Clock()
