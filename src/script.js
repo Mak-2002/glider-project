@@ -35,7 +35,7 @@ var atmospheric_pressure = 0 //? atmospheric pressure
 
 // Working variables
 var angular_velocity = new THREE.Vector3(1, 1, 1) //? instantaneous angular velocity
-var angular_speed_keys = 0.01
+var angular_speed_keys = 0.1
 
 var lift_coefficient = 1.0 //? lift coefficient
 var air_density = 1.225 //? kg/m^3, air density at sea level
@@ -45,7 +45,7 @@ var position = new THREE.Vector3()
 
 var speed_glider_frame = 0 //? m/s, initial speed of the glider
 
-var linear_velocity = new THREE.Vector3(1, 1, 4)
+var linear_velocity
 
 var starting_euler_angles = new THREE.Vector3(0, 1, 1) //? initial pitch, roll, and yaw angles
 var euler_angles = {
@@ -56,6 +56,10 @@ var euler_angles = {
 
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+
+// Simulation loop time
+const clock = new THREE.Clock()
+var delta_time
 
 var scene, camera, renderer
 
@@ -259,7 +263,7 @@ function add_glider_model() {
     (gltf) => {
       scene.add(gltf.scene)
       glider_model = gltf.scene
-      glider_model.rotateY(Math.PI)
+      // glider_model.rotateY(Math.PI)
       glider_model.add(axisHelper)
     },
 
@@ -311,7 +315,7 @@ function init() {
   window.addEventListener("resize", onWindowResize)
 
   // Assign starting values
-  linear_velocity = new THREE.Vector3(0, 0, 5)
+  linear_velocity = new THREE.Vector3(0, 0, 20)
   position.copy(starting_position)
   I = (1 / 12) * mass_of_glider * Math.pow(glider_lenght, 2)
 
@@ -385,6 +389,8 @@ function calc_drag() {
   return drag
 }
 
+var last_step = 0, current_step = 0
+
 function linear_movement() {
   speed_glider_frame = world_to_glider_trans(linear_velocity).z
 
@@ -401,47 +407,44 @@ function linear_movement() {
   var acceleration = aero_force.divideScalar(mass_of_glider)
 
   // Euler's method in integeration to find velocity and position
-  var delta_time = clock.getDelta() / 4 // make it slower to match with real time
   linear_velocity.copy(linear_velocity.clone().add(acceleration.multiplyScalar(delta_time)))
+
 
   //Update Position
   position.copy(position.add(linear_velocity.clone().multiplyScalar(delta_time)))
   if (glider_model) {
     glider_model.position.copy(position)
-    look_at_glider();
+    // look_at_glider();
+  }
+
+
+  current_step += clock.getDelta()
+  if (current_step - last_step > 0.007) {
+    console.clear()
+    console.log("delta time:", delta_time);
+    // if (glider_model)
+    // glider_model.position.z++
+    console.log("position: ", position);
+    console.log("velocity: ", linear_velocity)
+    console.log(euler_angles);
+    last_step = current_step
   }
 
 }
 function look_at_glider() {
-  if (!glider_model) return;
 
-  // Define the camera's distance and angle from the glider
-  const distance = 20;
-  const angle = Math.PI / 6; // 30 degrees
-
-  // Calculate the camera position offset based on the distance and angle
-  const offsetX = distance * Math.sin(angle);
-  const offsetY = distance * Math.cos(angle);
-
-  // Update the camera position to follow the glider with the offset
-  const gliderPosition = glider_model.position.clone();
-  const forwardDirection = glider_model.getWorldDirection(new THREE.Vector3());
-  const cameraOffset = new THREE.Vector3(offsetX, offsetY, 0).applyQuaternion(glider_model.quaternion);
-  camera.position.copy(gliderPosition).add(cameraOffset).add(forwardDirection.multiplyScalar(-5));
-
-  console.log(camera.position);
+  // Update the camera position to follow the glider
+  camera.position.copy(position.clone().add(new THREE.Vector3(0, 10, 20)))
 
   // Update the camera lookAt direction to look at the glider
-  camera.lookAt(gliderPosition);
-
-  // Rotate the camera's orientation to match the glider's rotation
-  camera.rotation.copy(glider_model.rotation);
+  camera.lookAt(position)
 }
 
-const clock = new THREE.Clock()
 function animate() {
   renderer.render(scene, camera)
 
+
+  delta_time = clock.getDelta() / 10
   atmospheric_pressure = SEA_LEVEL_PRESSURE * Math.exp(-position.y / 7000)
   air_density = atmospheric_pressure / (R * air_temperature) //? air density
 
