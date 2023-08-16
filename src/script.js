@@ -328,7 +328,7 @@ function add_land() {
   sphereGeometry.translate(-1000, -100, -500)
   //sphereGeometry.rotateX(5)
   var textureLoader = new THREE.TextureLoader()
-  var landTexture = textureLoader.load('/textures/grass.jpg')
+  var landTexture = textureLoader.load('/textures/sand.jpg')
   var sphereMaterial = new THREE.MeshPhongMaterial({ map: landTexture })
 
   var sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial)
