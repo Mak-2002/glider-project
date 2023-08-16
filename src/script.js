@@ -20,12 +20,12 @@ var mass_of_glider = 200 //? mass of the glider
 
 //? Geometric characteristics of the glider:
 var wingspan = 0
-var wing_area = 20.0
+var wing_area = 4.0
 var fuselageLength = 0
 var fuselageHeight = 0
 var tailHeight = 0
 var tailSpan = 0
-var projected_area = 2.0
+var projected_area = 4.0
 var glider_lenght = 2 //?m^2, projected area of the glider
 
 var air_speed = 0 //? wind speed relative to the wing of the glider
@@ -39,7 +39,7 @@ var angular_speed_keys = 0.1
 
 var air_density = 1.225 //? kg/m^3, air density at sea level
 
-var starting_position = new THREE.Vector3(0, 10, -1) //? starting position 
+var starting_position = new THREE.Vector3(0, 100, -1) //? starting position 
 var position = new THREE.Vector3()
 
 var speed_glider_frame = 0 //? m/s, initial speed of the glider
@@ -66,8 +66,12 @@ var glider_model
 
 const gui = new dat.GUI()
 var monitored_values = {
-  speed: 0.0001,
-  altitude: 0
+  longitudinal_speed: 0.0001,
+  vertical_speed: 0.0001,
+  altitude: 0,
+  drag: 0.0,
+  lift: 0.0,
+  weight: 0.0,
 }
 
 //TODO: fix the code accordingly
@@ -83,25 +87,20 @@ function init_gui() {
   //* Factors to Change
   const factors = {
     drag_coefficient: 0,
-    lift_coefficient: 1,
+    lift_coefficient: 0,
     mass_of_glider: 0,
-    wingspan: 0,
     wing_area: 0,
-    fuselageLength: 0,
-    fuselageHeight: 0,
-    tailHeight: 0,
-    tailSpan: 0,
-    air_speed: 0,
+    projected_area: 0,
     air_temperature: 0,
     atmospheric_pressure: 0,
   }
-  gui.add(factors, 'drag_coefficient', 1, 2, 0.001).name('Drag Coefficient').onChange(() => {
+
+  gui.add(factors, 'drag_coefficient', 1, 2).name('Drag Coefficient').onChange(() => {
     drag_coefficient = factors.drag_coefficient
-    if (glider_model) glider_model.translateX(drag_coefficient) //! debug, remove
     console.log(`drag_coefficient: ${drag_coefficient}`)
   })
 
-  gui.add(factors, 'lift_coefficient', 1, 100).name('Left Coefficient').onChange(() => {
+  gui.add(factors, 'lift_coefficient', 0, 1).name('Left Coefficient').onChange(() => {
     lift_coefficient = factors.lift_coefficient
     console.log(`lift_coefficient: ${lift_coefficient}`)
   })
@@ -112,14 +111,14 @@ function init_gui() {
   })
 
 
-  gui.add(factors, 'wing_area', 1, 20).name('Wing Area').onChange(() => {
+  gui.add(factors, 'wing_area', 1, 5).name('Wing Area').onChange(() => {
     wing_area = factors.wing_area
     console.log(`wing_area: ${wing_area}`)
   })
 
-  gui.add(factors, 'air_speed', 1, 10).name('Wind Speed').onChange(() => {
-    air_speed = factors.air_speed
-    console.log(`air_speed: ${air_speed}`)
+  gui.add(factors, 'projected_area', 1, 10).name('Wind Speed').onChange(() => {
+    projected_area = factors.projected_area
+    console.log(`projected_area: ${projected_area}`)
   })
 
   gui.add(factors, 'air_temperature', 0, 40).name('Air Temperature').onChange(() => {
@@ -135,14 +134,29 @@ function init_gui() {
 
   //* Values to Watch
 
-  const controller1 = gui.add(monitored_values, 'speed').name('Speed').listen()
+  const controller1 = gui.add(monitored_values, 'speed').name('Vertical Speed').listen()
   controller1.domElement.style.pointerEvents = 'none'
   controller1.domElement.style.opacity = 0.5
+
+  const controller6 = gui.add(monitored_values, 'speed').name('Speed').listen()
+  controller6.domElement.style.pointerEvents = 'none'
+  controller6.domElement.style.opacity = 0.5
 
   const controller2 = gui.add(monitored_values, 'altitude').name('Altitude').listen()
   controller2.domElement.style.pointerEvents = 'none'
   controller2.domElement.style.opacity = 0.5
-  console.log(monitored_values.altitude)
+
+  const controller3 = gui.add(monitored_values, 'lift').name('Lift').listen()
+  controller3.domElement.style.pointerEvents = 'none'
+  controller3.domElement.style.opacity = 0.5
+
+  const controller4 = gui.add(monitored_values, 'drag').name('Drag').listen()
+  controller4.domElement.style.pointerEvents = 'none'
+  controller4.domElement.style.opacity = 0.5
+
+  const controller5 = gui.add(monitored_values, 'weight').name('Weight').listen()
+  controller5.domElement.style.pointerEvents = 'none'
+  controller5.domElement.style.opacity = 0.5
 
 }
 
@@ -302,13 +316,13 @@ function init() {
   init_gui()
 
   add_orbit_controls()
-  add_key_controls()
+  // add_key_controls()
 
   add_light()
 
   add_sky_box()
   add_glider_model()
-  // add_land()
+  add_land()
 
 
   window.addEventListener("resize", onWindowResize)
@@ -370,6 +384,7 @@ function world_to_glider_trans(vector) {
 function calc_lift() {
   // Calculate lift in glider body-fixed frame
   var lift = 0.5 * air_density * Math.pow(speed_glider_frame, 2) * wing_area * lift_coefficient
+  monitored_values.lift = lift
   lift = new THREE.Vector3(0, lift, 0)
   // Transform to World frame
   lift.copy(glider_to_world_trans(lift))
@@ -379,6 +394,7 @@ function calc_lift() {
 function calc_drag() {
   // Calculate drag in glider body-fixed frame
   var drag = 0.5 * air_density * Math.pow(speed_glider_frame, 2) * drag_coefficient * projected_area
+  monitored_values.drag = drag
   drag = new THREE.Vector3(0, 0, -drag)
   // Transform to World frame
   drag.copy(glider_to_world_trans(drag))
@@ -395,6 +411,8 @@ function linear_movement() {
   var lift = calc_lift()
   var drag = calc_drag()
 
+  var weight = -mass_of_glider * g
+  monitored_values.weight = weight
   var weight = new THREE.Vector3(0, -mass_of_glider * g, 0)
 
   // console.log('lift: ', lift)
