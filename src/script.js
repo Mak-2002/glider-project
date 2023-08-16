@@ -14,9 +14,9 @@ var I = 0
 
 // Assignable Factors
 var drag_coefficient = 0.05 //? drag coefficient
-var lift_coefficient = 2 //? lift coefficient
+var lift_coefficient = 1 //? lift coefficient
 
-var mass_of_glider = 100 //? mass of the glider
+var mass_of_glider = 200 //? mass of the glider
 
 //? Geometric characteristics of the glider:
 var wingspan = 0
@@ -37,10 +37,9 @@ var atmospheric_pressure = 0 //? atmospheric pressure
 var angular_velocity = new THREE.Vector3(1, 1, 1) //? instantaneous angular velocity
 var angular_speed_keys = 0.1
 
-var lift_coefficient = 1.0 //? lift coefficient
 var air_density = 1.225 //? kg/m^3, air density at sea level
 
-var starting_position = new THREE.Vector3(0, 0, 1) //? starting position 
+var starting_position = new THREE.Vector3(0, 10, -1) //? starting position 
 var position = new THREE.Vector3()
 
 var speed_glider_frame = 0 //? m/s, initial speed of the glider
@@ -84,7 +83,7 @@ function init_gui() {
   //* Factors to Change
   const factors = {
     drag_coefficient: 0,
-    lift_coefficient: 2,
+    lift_coefficient: 1,
     mass_of_glider: 0,
     wingspan: 0,
     wing_area: 0,
@@ -107,7 +106,7 @@ function init_gui() {
     console.log(`lift_coefficient: ${lift_coefficient}`)
   })
 
-  gui.add(factors, 'mass_of_glider', 20, 2000).name('Mass of Glider').onChange(() => {
+  gui.add(factors, 'mass_of_glider', 200, 600).name('Mass of Glider').onChange(() => {
     mass_of_glider = factors.mass_of_glider
     console.log(`mass_of_glider: ${mass_of_glider}`)
   })
@@ -309,13 +308,13 @@ function init() {
 
   add_sky_box()
   add_glider_model()
-  add_land()
+  // add_land()
 
 
   window.addEventListener("resize", onWindowResize)
 
   // Assign starting values
-  linear_velocity = new THREE.Vector3(0, 0, 20)
+  linear_velocity = new THREE.Vector3(0, 0, 20) // maximum of 30
   position.copy(starting_position)
   I = (1 / 12) * mass_of_glider * Math.pow(glider_lenght, 2)
 
@@ -372,10 +371,8 @@ function calc_lift() {
   // Calculate lift in glider body-fixed frame
   var lift = 0.5 * air_density * Math.pow(speed_glider_frame, 2) * wing_area * lift_coefficient
   lift = new THREE.Vector3(0, lift, 0)
-
   // Transform to World frame
   lift.copy(glider_to_world_trans(lift))
-
   return lift
 }
 
@@ -397,6 +394,7 @@ function linear_movement() {
   //* Calculate Forces
   var lift = calc_lift()
   var drag = calc_drag()
+
   var weight = new THREE.Vector3(0, -mass_of_glider * g, 0)
 
   // console.log('lift: ', lift)
@@ -412,15 +410,16 @@ function linear_movement() {
 
   //Update Position
   position.copy(position.add(linear_velocity.clone().multiplyScalar(delta_time)))
+
   if (glider_model) {
     glider_model.position.copy(position)
-    // look_at_glider();
+    look_at_glider();
   }
 
 
   current_step += clock.getDelta()
   if (current_step - last_step > 0.007) {
-    console.clear()
+    // console.clear()
     console.log("delta time:", delta_time);
     // if (glider_model)
     // glider_model.position.z++
@@ -434,7 +433,7 @@ function linear_movement() {
 function look_at_glider() {
 
   // Update the camera position to follow the glider
-  camera.position.copy(position.clone().add(new THREE.Vector3(0, 10, 20)))
+  camera.position.copy(position.clone().add(new THREE.Vector3(0, 10, -20)))
 
   // Update the camera lookAt direction to look at the glider
   camera.lookAt(position)
@@ -444,7 +443,7 @@ function animate() {
   renderer.render(scene, camera)
 
 
-  delta_time = clock.getDelta() / 10
+  delta_time = clock.getDelta() / 4
   atmospheric_pressure = SEA_LEVEL_PRESSURE * Math.exp(-position.y / 7000)
   air_density = atmospheric_pressure / (R * air_temperature) //? air density
 
