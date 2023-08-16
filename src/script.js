@@ -95,6 +95,8 @@ function init_gui() {
     atmospheric_pressure: 0,
   }
 
+
+
   gui.add(factors, 'drag_coefficient', 1, 2).name('Drag Coefficient').onChange(() => {
     drag_coefficient = factors.drag_coefficient
     console.log(`drag_coefficient: ${drag_coefficient}`)
@@ -116,7 +118,7 @@ function init_gui() {
     console.log(`wing_area: ${wing_area}`)
   })
 
-  gui.add(factors, 'projected_area', 1, 10).name('Wind Speed').onChange(() => {
+  gui.add(factors, 'projected_area', 1, 10).name('Projected Area').onChange(() => {
     projected_area = factors.projected_area
     console.log(`projected_area: ${projected_area}`)
   })
@@ -134,13 +136,13 @@ function init_gui() {
 
   //* Values to Watch
 
-  const controller1 = gui.add(monitored_values, 'speed').name('Vertical Speed').listen()
-  controller1.domElement.style.pointerEvents = 'none'
-  controller1.domElement.style.opacity = 0.5
-
-  const controller6 = gui.add(monitored_values, 'speed').name('Speed').listen()
+  const controller6 = gui.add(monitored_values, 'longitudinal_speed').name('Longitudinal Speed').listen()
   controller6.domElement.style.pointerEvents = 'none'
   controller6.domElement.style.opacity = 0.5
+
+  const controller1 = gui.add(monitored_values, 'vertical_speed').name('Vertical Speed').listen()
+  controller1.domElement.style.pointerEvents = 'none'
+  controller1.domElement.style.opacity = 0.5
 
   const controller2 = gui.add(monitored_values, 'altitude').name('Altitude').listen()
   controller2.domElement.style.pointerEvents = 'none'
