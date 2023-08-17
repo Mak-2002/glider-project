@@ -161,7 +161,7 @@ function init_gui() {
 
 
   factors.mass_of_glider = mass_of_glider
-  gui.add(factors, 'mass_of_glider', 400, 600).name('Mass of Glider').onChange(() => {
+  gui.add(factors, 'mass_of_glider', 200, 1000).name('Mass of Glider').onChange(() => {
     mass_of_glider = factors.mass_of_glider
   })
 
@@ -293,19 +293,19 @@ function add_glider_model() {
 }
 
 function add_land() {
-  var widthSegments = 50
-  var heightSegments = 50
+  var widthSegments = 100
+  var heightSegments = 100
   var sphereGeometry = new THREE.SphereGeometry(widthSegments, heightSegments)
   sphereGeometry.scale(2000, 0, 2000)
-  sphereGeometry.translate(-1000, -0.3, -500)
+  sphereGeometry.translate(-1000, -0.65, -500)
 
   const texture = new THREE.TextureLoader().load('textures/grass.jpg')
   texture.wrapS = THREE.RepeatWrapping
   texture.wrapT = THREE.RepeatWrapping
 
   // Define how many times the texture should repeat
-  const repeatX = 60
-  const repeatY = 60
+  const repeatX = 120
+  const repeatY = 120
   texture.repeat.set(repeatX, repeatY)
 
   const sphereMaterial = new THREE.MeshBasicMaterial({ map: texture })
@@ -477,10 +477,12 @@ function animate() {
   atmospheric_pressure = SEA_LEVEL_PRESSURE * Math.exp(-position.y / 7000)
   air_density = atmospheric_pressure / (R * air_temperature) //? air density
 
-  if (position.y > 0)
+  if (position.y >= 0)
     linear_movement()
-  else
-    linear_velocity = new THREE.Vector3(0, 0, 0)
+  else {
+    position.y=0;
+    linear_velocity = new THREE.Vector3(0, 0, 0);
+  }
 
   update_monitored_values()
   requestAnimationFrame(animate)
